@@ -12,7 +12,7 @@ Thanks to everyone who has helped improve SuggestPilot!
   <tr>
     <td align="center">
       <a href="https://github.com/Utkarsh-rwt">
-        <img src="https://github.com/Utkarsh-rwt?s=80" width="80px;" alt="utkarsh-rwt"/><br />
+<img src="https://github.com/Utkarsh-rwt.png" width="80px;" alt="utkarsh-rwt"/><br />
         <sub><b>@Utkarsh-rwt</b></sub><br />
         <sub>1 PR merged</sub>
       </a>
