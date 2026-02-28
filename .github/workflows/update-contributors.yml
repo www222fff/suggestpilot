@@ -94,9 +94,10 @@ ${table}
 
             if (readme.includes(startMarker)) {
               // Update just the table between markers
+              const pattern = startMarker + '[\\s\\S]*?' + endMarker;
               readme = readme.replace(
-                new RegExp(`${startMarker}[\\s\\S]*?${endMarker}`),
-                `${startMarker}\n${table}\n${endMarker}`
+                new RegExp(pattern),
+                startMarker + '\n' + table + '\n' + endMarker
               );
             } else {
               // Insert the full block after the target paragraph
@@ -104,11 +105,11 @@ ${table}
               if (readme.includes(insertAfter)) {
                 readme = readme.replace(
                   insertAfter,
-                  `${insertAfter}\n\n---\n\n${block}\n\n---`
+                  insertAfter + '\n\n---\n\n' + block + '\n\n---'
                 );
               } else {
                 console.log('Target paragraph not found in README. Appending to end.');
-                readme += `\n\n---\n\n${block}\n\n---\n`;
+                readme += '\n\n---\n\n' + block + '\n\n---\n';
               }
             }
 
