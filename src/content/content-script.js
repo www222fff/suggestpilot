@@ -31,7 +31,10 @@
     os:        ['operating_system', 'operatingsystem', '_os_', 'os_name', 'your_os', 'platform'],
     browser:   ['browser', 'useragent', 'user_agent', 'browsername'],
     version:   ['version', 'app_version', 'appversion', 'software_version', 'softwareversion'],
-    skills:    ['skill', 'expertise', 'technology', 'tech_stack', 'techstack', 'languages', 'tools'],
+    languages: ['language', 'languages', 'spoken_language', 'preferred_language', 'language_preference', 'primary_language'],
+    pronouns: ['pronouns', 'pronoun', 'gender_pronoun', 'preferred_pronouns'],
+    education: ['education', 'education_level', 'highest_education', 'degree', 'qualification', 'academic_level'],
+    skills:    ['skill', 'expertise', 'technology', 'tech_stack', 'techstack', 'tools'],
     linkedin_url: ['linkedin'],
     github_url:   ['github'],
     timezone: ['timezone', 'time_zone'],
@@ -89,6 +92,104 @@
     if (/Firefox\//.test(ua)) { const v = ua.match(/Firefox\/([\d.]+)/); return `Firefox ${v ? v[1].split('.')[0] : ''}`.trim(); }
     if (/Safari\//.test(ua)) return 'Safari';
     return null;
+  }
+
+  function normalizeCandidateValue(value) {
+    return (value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  function createCandidateList(values, source, confidence) {
+    const seen = new Set();
+    const candidates = [];
+
+    values.forEach(value => {
+      const clean = (value || '').trim();
+      const key = clean.toLowerCase();
+      if (!clean || seen.has(key)) return;
+      seen.add(key);
+      candidates.push({ value: clean, source, confidence });
+    });
+
+    return candidates;
+  }
+
+  function collectFieldOptions(element) {
+    if (!element) return [];
+
+    let rawOptions = [];
+
+    if (element.tagName?.toLowerCase() === 'select') {
+      rawOptions = Array.from(element.options || []).map(option => option.textContent || option.value || '');
+    } else if (element.list) {
+      rawOptions = Array.from(element.list.options || []).map(option => option.value || option.textContent || '');
+    }
+
+    return rawOptions
+      .map(option => option.trim())
+      .filter(option =>
+        option &&
+        !/^(select|choose|please select|pick one|--|n\/a)$/i.test(option)
+      );
+  }
+
+  function buildLanguageCandidates(element) {
+    const fieldOptions = collectFieldOptions(element);
+    const locales = Array.from(new Set(
+      [navigator.language, ...(navigator.languages || [])].filter(Boolean)
+    ));
+
+    const displayNames = typeof Intl.DisplayNames === 'function'
+      ? new Intl.DisplayNames(locales, { type: 'language' })
+      : null;
+
+    const optionEntries = fieldOptions.map(option => ({
+      value: option,
+      normalized: normalizeCandidateValue(option)
+    }));
+
+    const candidates = [];
+    const seen = new Set();
+
+    locales.forEach(locale => {
+      const languageCode = locale.split('-')[0];
+      const displayName = displayNames?.of(languageCode) || null;
+      const variations = [
+        displayName,
+        locale,
+        locale.replace('-', '_'),
+        languageCode
+      ].filter(Boolean);
+
+      if (optionEntries.length > 0) {
+        const matched = optionEntries.find(option =>
+          variations.some(variation => {
+            const normalizedVariation = normalizeCandidateValue(variation);
+            return option.normalized === normalizedVariation ||
+              option.normalized.includes(normalizedVariation) ||
+              normalizedVariation.includes(option.normalized);
+          })
+        );
+
+        if (matched && !seen.has(matched.value.toLowerCase())) {
+          seen.add(matched.value.toLowerCase());
+          candidates.push({ value: matched.value, source: 'Browser language preferences', confidence: 0.95 });
+        }
+
+        return;
+      }
+
+      const fallbackValue = displayName || locale;
+      const key = fallbackValue.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        candidates.push({ value: fallbackValue, source: 'Browser language preferences', confidence: 0.95 });
+      }
+    });
+
+    return candidates.slice(0, 3);
   }
 
   /**
@@ -150,6 +251,26 @@
           meta.isFormFill = true;
         }
       } catch (e) { /* unsupported */ }
+    }
+
+    if (fieldType === 'languages') {
+      const languageCandidates = buildLanguageCandidates(element);
+      if (languageCandidates.length > 0) {
+        meta.candidates.push(...languageCandidates);
+        meta.isFormFill = true;
+      }
+    }
+
+    if ((fieldType === 'pronouns' || fieldType === 'education') && element.tagName?.toLowerCase() === 'select') {
+      const optionCandidates = createCandidateList(
+        collectFieldOptions(element).slice(0, 3),
+        'Available form options',
+        0.65
+      );
+      if (optionCandidates.length > 0) {
+        meta.candidates.push(...optionCandidates);
+        meta.isFormFill = true;
+      }
     }
 
     // ── Tab-dependent types: mark isFormFill so service-worker uses

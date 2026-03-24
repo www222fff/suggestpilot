@@ -63,7 +63,10 @@ class FormDetector {
     if (/(github|git[_\s-]hub)/.test(combined)) return 'github_url';
     if (/(website|portfolio|personal[_\s-]?site|homepage|url|link)/.test(combined)) return 'website';
     if (/(years[_\s]?of[_\s]?exp|experience[_\s]?years|yoe)/.test(combined)) return 'experience_years';
-    if (/(skill|expertise|technology|tech[_\s]?stack|languages|tools)/.test(combined)) return 'skills';
+    if (/(preferred[_\s-]?language|spoken[_\s-]?language|languages?)/.test(combined)) return 'languages';
+    if (/(pronouns?|preferred[_\s-]?pronouns?)/.test(combined)) return 'pronouns';
+    if (/(education|education[_\s-]?level|highest[_\s-]?education|degree|qualification|academic[_\s-]?level)/.test(combined)) return 'education';
+    if (/(skill|expertise|technology|tech[_\s]?stack|tools)/.test(combined)) return 'skills';
    
     // ── Support / bug report ─────────────────────────────────────────────────
     if (/(os|operating[_\s]?system|platform)/.test(combined)) return 'os';
@@ -133,6 +136,14 @@ class FormDetector {
           const skills = this._extractSkillsFromGitHub(ghTab.title);
           if (skills) candidates.push({ value: skills, source: 'GitHub tab', confidence: 0.7 });
         }
+        break;
+      }
+
+      case 'languages': {
+        const preferredLanguages = this._detectLanguages();
+        preferredLanguages.forEach(language => {
+          candidates.push({ value: language, source: 'Browser language preferences', confidence: 0.95 });
+        });
         break;
       }
 
@@ -236,6 +247,21 @@ class FormDetector {
     // GitHub profile: "username (Full Name) · GitHub" — not much to extract.
     // Return null and let the AI build skills suggestions from history instead.
     return null;
+  }
+
+  _detectLanguages() {
+    const locales = Array.from(new Set(
+      [navigator.language, ...(navigator.languages || [])].filter(Boolean)
+    ));
+
+    const displayNames = typeof Intl.DisplayNames === 'function'
+      ? new Intl.DisplayNames(locales, { type: 'language' })
+      : null;
+
+    return locales
+      .map(locale => displayNames?.of(locale.split('-')[0]) || locale)
+      .filter((value, index, all) => value && all.indexOf(value) === index)
+      .slice(0, 3);
   }
 
   _detectOS() {
