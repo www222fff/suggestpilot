@@ -1,8 +1,10 @@
 name: Update Contributors
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 concurrency:
   group: update-contributors
@@ -10,7 +12,6 @@ concurrency:
 
 jobs:
   update-contributors:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -123,7 +124,7 @@ jobs:
             fs.writeFileSync('README.md', readme);
             console.log('Updated contributors: ' + entries.map(([l]) => l).join(', '));
 
-      - name: Create PR and auto-merge
+      - name: Commit and push directly to main
         run: |
           git add README.md
 
@@ -132,21 +133,8 @@ jobs:
             exit 0
           fi
 
+          git pull --rebase origin main
           git commit -m "docs: update contributors table [skip ci]"
-
-          BRANCH="update-contributors-${{ github.run_id }}"
-          git checkout -b "$BRANCH"
-          git push origin "$BRANCH"
-
-          PR_URL=$(gh pr create \
-            --title "docs: update contributors table" \
-            --body "Automated contributors table update triggered by merge of #${{ github.event.pull_request.number }}." \
-            --base main \
-            --head "$BRANCH")
-
-          echo "PR created: $PR_URL"
-
-          # Auto-merge the PR immediately
-          gh pr merge "$PR_URL" --squash --auto --delete-branch
+          git push origin main
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
