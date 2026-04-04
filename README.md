@@ -18,6 +18,13 @@ Thanks to everyone who has helped improve SuggestPilot!
       </a>
     </td>
     <td align="center">
+      <a href="https://github.com/saijaku0">
+        <img src="https://avatars.githubusercontent.com/u/79520056?v=4" width="80px;" alt="saijaku0"/><br />
+        <sub><b>@saijaku0</b></sub><br />
+        <sub>2 PRs merged</sub>
+      </a>
+    </td>
+    <td align="center">
       <a href="https://github.com/terminalchai">
         <img src="https://avatars.githubusercontent.com/u/213856599?v=4" width="80px;" alt="terminalchai"/><br />
         <sub><b>@terminalchai</b></sub><br />
@@ -45,6 +52,8 @@ Thanks to everyone who has helped improve SuggestPilot!
         <sub>1 PR merged</sub>
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://github.com/Utkarsh-rwt">
         <img src="https://avatars.githubusercontent.com/u/241274883?v=4" width="80px;" alt="Utkarsh-rwt"/><br />
