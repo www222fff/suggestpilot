@@ -127,8 +127,10 @@ jobs:
       - name: Commit and push directly to main
         run: |
 
+          git stash
           git pull --rebase origin main
-          
+          git stash pop
+
           git add README.md
 
           if git diff --staged --quiet README.md; then
